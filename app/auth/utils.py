@@ -12,7 +12,8 @@ from app.db import get_db
 from app.models import User, RefreshToken
 
 SECRET_KEY = os.getenv("JWT_SECRET", "changeme")
-ALGORITHM = "HS256"
+ALGORITHM = os.getenv("ALGORITHM", "HS256")
+
 ACCESS_TOKEN_EXPIRE_MINUTES = 15
 REFRESH_TOKEN_EXPIRE_DAYS = 7
 

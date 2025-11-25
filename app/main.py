@@ -3,7 +3,7 @@ from app.auth.routes import router as auth_router
 from app.audit.routes import router as audit_router
 import asyncio
 from app.cleanup import cleanup_expired_tokens
-from app.audit.middelware import AuditMiddleware
+from app.audit.middleware import AuditMiddleware
 
 app = FastAPI()
 
