@@ -5,7 +5,14 @@ import os
 
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+env_mode = os.getenv("ENV", "dev")
+host = "db" if env_mode == "production" else "localhost"
+
+POSTGRES_USER = os.getenv("POSTGRES_USER")
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
+POSTGRES_DB=os.getenv("POSTGRES_DB")
+
+DATABASE_URL=f"postgresql+psycopg2://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{host}:5432/{POSTGRES_DB}"
 
 def get_db():
     db = SessionLocal()

@@ -7,7 +7,7 @@ BASE_URL = "http://localhost:8000"
 @pytest.fixture(scope="session", autouse=True)
 def seed_admin():
     """Führt das Seed-Skript aus, bevor Tests starten."""
-    subprocess.run(["python3", "seed_admin.py"], check=True)
+    subprocess.run(["python3", "scripts/seed_test_admin.py"], check=True)
     yield
     # Nach Tests: Admin bleibt bestehen, keine Löschung nötig
 
