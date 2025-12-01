@@ -4,16 +4,13 @@ from app.auth.routes import router as auth_router
 from app.audit.routes import router as audit_router
 from app.user.routes import router as user_router
 import asyncio
+import os
 from app.cleanup import cleanup_expired_tokens
 from app.audit.middleware import AuditMiddleware
 
 app = FastAPI()
 
-origins = [
-    "http://localhost:5173",             # Vite Dev-Server
-    "http://87.106.209.41:5173",             # Vite Dev-Server
-    "https://eplan.bleuel-it.de.de"   # deine Subdomain fürs Frontend
-]
+origins = os.getenv("CORS_ORIGINS", "").split(",")
 
 @app.on_event("startup")
 async def start_cleanup_task():
