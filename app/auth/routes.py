@@ -5,16 +5,16 @@ from sqlalchemy.orm import Session
 from fastapi import APIRouter, Depends, HTTPException, Path
 from fastapi.security import OAuth2PasswordRequestForm
 from app.schemas.password import ChangePasswordRequest, AdminChangePasswordRequest
-from app.auth.utils import get_current_user, require_role
 from passlib.context import CryptContext
 
-from app.auth.utils import (
+from app.utils.utils import (
     create_access_token,
     create_refresh_token,
     get_db,
     oauth2_scheme,
     RefreshTokenRequest,
     RegisterRequest,
+    get_current_user,
     require_role
 )
 
@@ -90,50 +90,29 @@ def logout(request: RefreshTokenRequest, db: Session = Depends(get_db)):
 @router.get("/me")
 def read_me(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(
+            token,
+            SECRET_KEY,
+            algorithms=[ALGORITHM],
+            options={"verify_exp": True}  # <--- Ablaufzeit prüfen
+        )
         if payload.get("type") != "access":
             raise HTTPException(status_code=401, detail="Invalid token type")
         username = payload.get("sub")
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
     except jwt.PyJWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
     user = db.query(User).filter(User.username == username).first()
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
-    return {"id": user.id, "username": user.username}
 
-@router.post("/register")
-def register(request: RegisterRequest, db: Session = Depends(get_db), user: User = Depends(require_role("admin"))):
-    if db.query(User).filter(User.username == request.username).first():
-        raise HTTPException(status_code=400, detail="User already exists")
-
-    new_user = User(
-        username=request.username,
-        hashed_password=pwd_context.hash(request.password),
-        role=request.role
-    )
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-    return {"msg": f"User {request.username} created with role {request.role}"}
-
-@router.delete("/users/{user_id}")
-def delete_user(
-    user_id: int = Path(..., description="ID des zu löschenden Users"),
-    db: Session = Depends(get_db),
-    admin: User = Depends(require_role("admin"))  # nur Admin darf löschen
-):
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    # Admin selbst darf nicht gelöscht werden (optional)
-    if user.username == "admin":
-        raise HTTPException(status_code=403, detail="Cannot delete admin user")
-
-    db.delete(user)
-    db.commit()
-    return {"msg": f"User {user.username} deleted successfully"}
+    return {
+        "id": user.id,
+        "username": user.username,
+        "role": user.role,
+    }
 
 @router.post("/change-password")
 def change_password(

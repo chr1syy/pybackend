@@ -5,7 +5,7 @@ from datetime import datetime
 
 from app.db import get_db
 from app.models import AuditLog, User
-from app.auth.utils import require_role
+from app.utils.utils import require_role
 
 router = APIRouter()
 
