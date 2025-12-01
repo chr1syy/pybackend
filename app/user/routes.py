@@ -30,6 +30,16 @@ def update_user(user_id: int, update: UserUpdateSchema, db: Session = Depends(ge
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    
+    if user.role == "admin" and update.role != "admin":
+        # Prüfen ob noch andere Admins existieren
+        other_admins = db.query(User).filter(User.role == "admin", User.id != user.id).count()
+        if other_admins == 0:
+            raise HTTPException(
+                status_code=400,
+                detail="Es muss mindestens ein Admin im System bleiben"
+            )
+        
     if update.role:
         user.role = update.role
     db.commit()
@@ -51,6 +61,13 @@ def delete_user(user_id: int, db: Session = Depends(get_db), current_user: User 
 
 @router.post("/register")
 def register(request: RegisterRequest, db: Session = Depends(get_db), user: User = Depends(require_role("admin"))):
+
+    if user.role != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Only admins can create new users"
+       )
+    
     if db.query(User).filter(User.username == request.username).first():
         raise HTTPException(status_code=400, detail="User already exists")
 
@@ -62,4 +79,4 @@ def register(request: RegisterRequest, db: Session = Depends(get_db), user: User
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-    return {"msg": f"User {request.username} created with role {request.role}"}
+    return {"detail": f"User {request.username} created with role {request.role}"}

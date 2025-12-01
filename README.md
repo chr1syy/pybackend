@@ -22,12 +22,17 @@ pip install -r requirements.txt
 docker-compose -f docker-compose.dev.yml up -d
 ```
 
-5. Start Backend locally
+5. Init Database
+```
+alembic upgrade head
+```
+
+6. Start Backend locally
 ```
 uvicorn app.main:app --reload
 ```
 
-6. Running `pytest` automatically Seeds Admin User with Admin Password
+7. Running `pytest` automatically Seeds Admin User with Admin Password and runs the Endpoint tests
 
 
 # Prod
