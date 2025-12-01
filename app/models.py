@@ -34,3 +34,11 @@ class AuditLog(Base):
     timestamp = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("User", back_populates="audit_logs")
+
+class Project(Base):
+    __tablename__ = "projects"
+
+    id = Column(Integer, primary_key=True, index=True)
+    project_number = Column(String, unique=True, nullable=False)  # Format YYYY-XXXX
+    name = Column(String, nullable=False)
+    description = Column(String, nullable=True)
