@@ -34,6 +34,12 @@ uvicorn app.main:app --reload
 
 7. Running `pytest` automatically Seeds Admin User with Admin Password and runs the Endpoint tests
 
+Scripts to reset DB or seed an Admin User manually:
+```
+python3 -m scripts.reset_db
+python3 -m scripts.seed_admin
+```
+
 
 # Prod
 
@@ -45,3 +51,46 @@ uvicorn app.main:app --reload
 ```
 docker-compose -f docker-compose.prod.yml up --build
 ```
+
+# ToDo / Roadmap
+
+- Zugangscode per E-Mail verschicken (z. B. für Registrierung oder 2FA)
+- Passwort selbst vergeben / Passwort vergessen → Endpunkte für Reset‑Token, Validierung, neue Passwortsetzung
+- Erweiterung: Audit Logging (wer hat wann Passwort geändert, wann Zugangscode genutzt)
+- Erweiterung: Rate Limiting für Passwort‑Reset und Login‑Versuche (Nginx)
+
+- Speicherung der eingegebenen Kabeldaten (Länge, Strom, Spannungsfall, Material, Querschnitt) in der DB
+- Generierung einer Konformitätserklärung als PDF/JSON → Endpunkt /cable-certificates
+- Erweiterung: Versionierung der Berechnungen (damit Änderungen nachvollziehbar bleiben)
+- Erweiterung: Export API für Berichte (z. B. PDF, CSV)
+
+- Blitzschutz, Trennungsabstände → neue Endpunkte /calculations/lightning, /calculations/separation
+- Erweiterung: Berechnungs-Engine modularisieren → jede Berechnung als Service, leicht erweiterbar
+- Erweiterung: Validierung gegen Normen (DIN/VDE‑Tabellen im Backend hinterlegt)
+
+- Formulare für Passwort‑Vergessen (E-Mail eingeben → Code erhalten → neues Passwort setzen)
+- UI für Zugangscode‑Eingabe bei Registrierung oder Login
+- Erweiterung: Feedback‑Modals (z. B. „Code erfolgreich gesendet“)
+- Erweiterung: 2FA‑Dialoge (Code per Mail eingeben)
+
+- Eingabeformular mit allen Variablen (Länge, Strom, Spannung, Spannungsfall in %)
+- Ergebnisanzeige mit berechnetem Querschnitt + Empfehlung Standardgröße
+- Erweiterung: „Speichern“‑Button → Kabeldaten in DB ablegen
+- Erweiterung: Liste gespeicherter Berechnungen → Auswahl + Export als PDF
+
+- Neue Views für Blitzschutz und Trennungsabstände
+- Einheitliches Layout wie bei Conversion/CableCalculation
+- Erweiterung: Tab‑Navigation für alle Berechnungen (Conversion, Kabel, Blitzschutz, …)
+- Erweiterung: Diagramme/Visualisierungen (z. B. Trennungsabstände grafisch darstellen)
+
+- Rollen & Rechte (Admin kann Berechnungen anderer einsehen, User nur eigene)
+- API‑Dokumentation (Swagger/OpenAPI) für alle Berechnungsendpunkte
+- Hintergrundjobs für E-Mail‑Versand (Queue, Retry)
+
+- Dashboard mit Übersicht: letzte Berechnungen, gespeicherte Projekte, offene Zertifikate
+- Export‑Buttons (PDF/CSV) direkt in den Views
+- Responsive Design für mobile Nutzung auf Baustellen
+
+- Versionierung und Anzeige von aktuellen Plänen
+- Preisdatenbank nach vorherigem Muster
+

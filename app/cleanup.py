@@ -1,6 +1,8 @@
-from datetime import datetime
 from sqlalchemy.orm import Session
-from app.db import SessionLocal
+
+from datetime import datetime
+
+from app.utils.db import SessionLocal
 from app.models import RefreshToken
 
 def cleanup_expired_tokens():

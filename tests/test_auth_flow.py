@@ -9,7 +9,7 @@ def test_login_and_me(admin_headers):
 
 def test_refresh(admin_headers):
     # Refresh-Token über Login holen
-    login_resp = requests.post(f"{BASE_URL}/auth/login", data={"username": "admin", "password": "admin"})
+    login_resp = requests.post(f"{BASE_URL}/auth/login", json={"email": "admin@example.com", "password": "admin"})
     refresh = login_resp.json()["refresh_token"]
 
     resp = requests.post(f"{BASE_URL}/auth/refresh", json={"refresh_token": refresh})
@@ -19,7 +19,7 @@ def test_refresh(admin_headers):
 
 def test_logout(admin_headers):
     # Refresh-Token über Login holen
-    login_resp = requests.post(f"{BASE_URL}/auth/login", data={"username": "admin", "password": "admin"})
+    login_resp = requests.post(f"{BASE_URL}/auth/login", json={"email": "admin@example.com", "password": "admin"})
     refresh = login_resp.json()["refresh_token"]
 
     resp = requests.post(f"{BASE_URL}/auth/logout", json={"refresh_token": refresh})

@@ -1,8 +1,9 @@
 # scripts/reset_test_db.py
 from sqlalchemy.orm import Session
 from sqlalchemy import text
-from app.db import SessionLocal, Base, engine
-from app.models import User, RefreshToken
+
+from app.utils.db import SessionLocal, Base, engine
+from app.models import User, RefreshToken, AuditLog, AccessCode, PasswordResetToken
 
 def reset_db():
     # Schema komplett leeren
@@ -14,10 +15,13 @@ def reset_db():
     # Tabellen neu anlegen
     Base.metadata.create_all(bind=engine)
 
-    # Optional: sicherstellen, dass keine alten User/Tokens übrig sind
+    # Optional: sicherstellen, dass keine alten Daten übrig sind
     db: Session = SessionLocal()
     db.query(RefreshToken).delete()
     db.query(User).delete()
+    db.query(AuditLog).delete()
+    db.query(AccessCode).delete()
+    db.query(PasswordResetToken).delete()
     db.commit()
     db.close()
 
