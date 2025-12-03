@@ -1,18 +1,12 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
-from dotenv import load_dotenv
-import os
 
-load_dotenv()
+from app.core.settings import settings
 
-env_mode = os.getenv("ENV", "dev")
+env_mode = settings.ENV
 host = "db" if env_mode == "production" else "localhost"
 
-POSTGRES_USER = os.getenv("POSTGRES_USER")
-POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
-POSTGRES_DB=os.getenv("POSTGRES_DB")
-
-DATABASE_URL=f"postgresql+psycopg2://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{host}:5432/{POSTGRES_DB}"
+DATABASE_URL=f"postgresql+psycopg2://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}@{host}:5432/{settings.POSTGRES_DB}"
 
 def get_db():
     db = SessionLocal()

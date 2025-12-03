@@ -13,7 +13,7 @@ alembic upgrade head
 
 # Admin seeden (nur wenn nicht vorhanden)
 echo "Seeding admin user..."
-python -m scripts.seed_prod_admin || true
+python -m scripts.seed_admin || true
 
 # Danach Backend starten
 exec uvicorn app.main:app --host 0.0.0.0 --port 8000
