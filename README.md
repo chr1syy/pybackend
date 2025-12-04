@@ -54,16 +54,6 @@ docker-compose -f docker-compose.prod.yml up --build
 
 # ToDo / Roadmap
 
-- Zugangscode per E-Mail verschicken (z. B. für Registrierung oder 2FA)
-- Passwort selbst vergeben / Passwort vergessen → Endpunkte für Reset‑Token, Validierung, neue Passwortsetzung
-- Erweiterung: Audit Logging (wer hat wann Passwort geändert, wann Zugangscode genutzt)
-- Erweiterung: Rate Limiting für Passwort‑Reset und Login‑Versuche (Nginx)
-
-- Speicherung der eingegebenen Kabeldaten (Länge, Strom, Spannungsfall, Material, Querschnitt) in der DB
-- Generierung einer Konformitätserklärung als PDF/JSON → Endpunkt /cable-certificates
-- Erweiterung: Versionierung der Berechnungen (damit Änderungen nachvollziehbar bleiben)
-- Erweiterung: Export API für Berichte (z. B. PDF, CSV)
-
 - Blitzschutz, Trennungsabstände → neue Endpunkte /calculations/lightning, /calculations/separation
 - Erweiterung: Berechnungs-Engine modularisieren → jede Berechnung als Service, leicht erweiterbar
 - Erweiterung: Validierung gegen Normen (DIN/VDE‑Tabellen im Backend hinterlegt)
@@ -83,7 +73,6 @@ docker-compose -f docker-compose.prod.yml up --build
 - Erweiterung: Tab‑Navigation für alle Berechnungen (Conversion, Kabel, Blitzschutz, …)
 - Erweiterung: Diagramme/Visualisierungen (z. B. Trennungsabstände grafisch darstellen)
 
-- Rollen & Rechte (Admin kann Berechnungen anderer einsehen, User nur eigene)
 - API‑Dokumentation (Swagger/OpenAPI) für alle Berechnungsendpunkte
 - Hintergrundjobs für E-Mail‑Versand (Queue, Retry)
 
@@ -92,5 +81,4 @@ docker-compose -f docker-compose.prod.yml up --build
 - Responsive Design für mobile Nutzung auf Baustellen
 
 - Versionierung und Anzeige von aktuellen Plänen
-- Preisdatenbank nach vorherigem Muster
 

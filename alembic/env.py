@@ -1,24 +1,26 @@
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
+from sqlalchemy import create_engine, pool
 
 from alembic import context
 
 from app.models import Base
 from dotenv import load_dotenv
 import os
+from urllib.parse import quote_plus
 
 load_dotenv()
 
-env_mode = os.getenv("ENV", "dev")
-host = "db" if env_mode == "production" else "localhost"
+env_mode = os.getenv("ENV", "development")
+# Use 127.0.0.1 instead of localhost to force TCP connection (not Unix socket)
+host = "db" if env_mode == "production" else "127.0.0.1"
 
 POSTGRES_USER = os.getenv("POSTGRES_USER")
 POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
 POSTGRES_DB=os.getenv("POSTGRES_DB")
 
-DATABASE_URL=f"postgresql+psycopg2://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{host}:5432/{POSTGRES_DB}"
+# URL-encode the password to handle special characters
+DATABASE_URL=f"postgresql+psycopg2://{POSTGRES_USER}:{quote_plus(POSTGRES_PASSWORD)}@{host}:5432/{POSTGRES_DB}"
 
 target_metadata = Base.metadata
 
@@ -26,7 +28,8 @@ target_metadata = Base.metadata
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
-config.set_main_option("sqlalchemy.url", DATABASE_URL)
+# Don't set the URL in config to avoid ConfigParser interpolation issues with special chars
+# We'll create the engine directly in run_migrations_online()
 
 
 # Interpret the config file for Python logging.
@@ -72,11 +75,8 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
-    connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
-    )
+    # Create engine directly with our DATABASE_URL to avoid ConfigParser interpolation issues
+    connectable = create_engine(DATABASE_URL, poolclass=pool.NullPool)
 
     with connectable.connect() as connection:
         context.configure(

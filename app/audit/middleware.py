@@ -27,9 +27,9 @@ class AuditMiddleware(BaseHTTPMiddleware):
             try:
                 payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.ALGORITHM])
                 if payload.get("type") == "access":
-                    username = payload.get("sub")
+                    email = payload.get("sub")  # JWT contains email, not username
                     db: Session = SessionLocal()
-                    user = db.query(User).filter(User.username == username).first()
+                    user = db.query(User).filter(User.email == email).first()
                     if user:
                         user_id = user.id
                     db.close()

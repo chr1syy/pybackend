@@ -1,9 +1,12 @@
 import secrets
 import jwt
+import os
 
 from sqlalchemy.orm import Session
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Request
 from fastapi.security import OAuth2PasswordRequestForm
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from datetime import datetime, timedelta
 
@@ -32,14 +35,36 @@ from app.utils.auth import (
 
 router = APIRouter()
 
+# Check if we're in testing mode
+TESTING = os.getenv("TESTING", "false").lower() == "true"
+
+# Set rate limits based on testing mode
+if TESTING:
+    limiter = Limiter(key_func=get_remote_address, default_limits=["999999/minute"])
+    LOGIN_RATE_LIMIT = "999999/minute"
+    REFRESH_RATE_LIMIT = "999999/minute"
+    REGISTER_RATE_LIMIT = "999999/hour"
+    INVITE_RATE_LIMIT = "999999/hour"
+    FORGOT_PASSWORD_RATE_LIMIT = "999999/hour"
+    RESET_PASSWORD_RATE_LIMIT = "999999/hour"
+else:
+    limiter = Limiter(key_func=get_remote_address)
+    LOGIN_RATE_LIMIT = "5/minute"
+    REFRESH_RATE_LIMIT = "10/minute"
+    REGISTER_RATE_LIMIT = "20/hour"
+    INVITE_RATE_LIMIT = "5/hour"
+    FORGOT_PASSWORD_RATE_LIMIT = "3/hour"
+    RESET_PASSWORD_RATE_LIMIT = "5/hour"
+
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
 @router.post("/login")
-def login(req: LoginRequest, db: Session = Depends(get_db)):
+@limiter.limit(LOGIN_RATE_LIMIT)
+def login(request: Request, req: LoginRequest, db: Session = Depends(get_db)):
     # Suche nach E-Mail statt Username
     user = db.query(User).filter(User.email == req.email).first()
     if not user or not pwd_context.verify(req.password, user.hashed_password):
-        raise HTTPException(status_code=400, detail="Invalid credentials")
+        raise HTTPException(status_code=401, detail="Invalid credentials")
 
     # Tokens mit E-Mail als subject
     access_token = create_access_token(user.email)
@@ -49,8 +74,9 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/refresh")
-def refresh(request: RefreshTokenRequest, db: Session = Depends(get_db)):
-    refresh_token = request.refresh_token
+@limiter.limit(REFRESH_RATE_LIMIT)
+def refresh(request: Request, req: RefreshTokenRequest, db: Session = Depends(get_db)):
+    refresh_token = req.refresh_token
 
     # Token aus DB holen
     db_token = db.query(RefreshToken).filter(RefreshToken.token == refresh_token).first()
@@ -88,8 +114,8 @@ def refresh(request: RefreshTokenRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/logout")
-def logout(request: RefreshTokenRequest, db: Session = Depends(get_db)):
-    refresh_token = request.refresh_token
+def logout(req: RefreshTokenRequest, db: Session = Depends(get_db)):
+    refresh_token = req.refresh_token
     db_token = db.query(RefreshToken).filter(RefreshToken.token == refresh_token).first()
     if db_token:
         db.delete(db_token)
@@ -147,7 +173,9 @@ def change_password(
     return {"msg": "Password changed; all sessions invalidated"}
 
 @router.post("/invite")
+@limiter.limit(INVITE_RATE_LIMIT)
 def invite_user(
+    request: Request,
     email: str,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
@@ -182,7 +210,9 @@ def invite_user(
     return {"detail": f"Invitation sent to {email}"}
 
 @router.post("/complete-registration")
+@limiter.limit(REGISTER_RATE_LIMIT)
 def complete_registration(
+    request: Request,
     req: CompleteRegistrationRequest,
     db: Session = Depends(get_db)
 ):
@@ -223,40 +253,47 @@ def complete_registration(
     return {"detail": f"User {req.email} registered successfully"}
 
 @router.post("/forgot-password")
+@limiter.limit(FORGOT_PASSWORD_RATE_LIMIT)
 def forgot_password(
+    request: Request,
     req: ForgotPasswordRequest,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db)
 ):
     user = db.query(User).filter(User.email == req.email).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
 
-    # Reset‑Token erstellen
-    code = secrets.token_urlsafe(16)
-    reset_token = AccessCode(
-        code=code,
-        purpose="password_reset",
-        user_id=user.id,
-        expires_at=datetime.utcnow() + timedelta(hours=1),
-        used=False
-    )
-    db.add(reset_token)
-    db.commit()
+    # Always return success to prevent email enumeration
+    # Send email only if user exists
+    if user:
+        # Reset‑Token erstellen
+        code = secrets.token_urlsafe(16)
+        reset_token = AccessCode(
+            code=code,
+            purpose="password_reset",
+            user_id=user.id,
+            expires_at=datetime.utcnow() + timedelta(hours=1),
+            used=False
+        )
+        db.add(reset_token)
+        db.commit()
 
-    # Mail verschicken
-    background_tasks.add_task(
-        send_email,
-        to=req.email,
-        subject="Passwort zurücksetzen",
-        body=f"Ihr Reset‑Code lautet: {code}"
-    )
+        # Mail verschicken
+        background_tasks.add_task(
+            send_email,
+            to=req.email,
+            subject="Passwort zurücksetzen",
+            body=f"Ihr Reset‑Code lautet: {code}"
+        )
 
-    log_action(db, user.id, "password_reset_requested", details={"email": req.email})
-    return {"detail": "Password reset email sent"}
+        log_action(db, user.id, "password_reset_requested", details={"email": req.email})
+
+    # Generic response to prevent email enumeration
+    return {"detail": "If the email exists, a password reset link has been sent"}
 
 @router.post("/reset-password")
+@limiter.limit(RESET_PASSWORD_RATE_LIMIT)
 def reset_password(
+    request: Request,
     req: ResetPasswordRequest,
     db: Session = Depends(get_db)
 ):
