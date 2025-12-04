@@ -1,16 +1,18 @@
 from sqlalchemy import func
 from sqlalchemy.orm import Session
+from fastapi import HTTPException
 
-from app.models import CableCalculation
+from app.models import CableCalculation, User
 from app.schemas.cable_calculation import CableCalculationCreate
 
-def create_cable_calculation(db: Session, project_id: int, calc: CableCalculationCreate):
+def create_cable_calculation(db: Session, project_id: int, calc: CableCalculationCreate, owner_id: int):
     latest_version = db.query(func.max(CableCalculation.version)).filter_by(project_id=project_id).scalar() or 0
     new_version = latest_version + 1
 
     db_calc = CableCalculation(
         project_id=project_id,
         version=new_version,
+        owner_id=owner_id,
         **calc.dict()
     )
     db.add(db_calc)
@@ -34,10 +36,13 @@ def update_cable_calculation(db: Session, calc_id: int, calc_update: CableCalcul
     db.refresh(db_calc)
     return db_calc
 
-def delete_cable_calculation(db: Session, calc_id: int):
+def delete_cable_calculation(db: Session, calc_id: int, current_user: User):
     db_calc = db.query(CableCalculation).filter_by(id=calc_id).first()
     if not db_calc:
         return None
+    # Check ownership: only owner or admin can delete
+    if db_calc.owner_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Not authorized to delete this calculation")
     db.delete(db_calc)
     db.commit()
     return True

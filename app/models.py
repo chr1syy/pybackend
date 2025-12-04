@@ -66,6 +66,7 @@ class Project(Base):
     project_number = Column(String, unique=True, nullable=False)  # Format YYYY-XXXX
     name = Column(String, nullable=False)
     description = Column(String, nullable=True)
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 
     # Beziehung zu CableCalculation
     cable_calculations = relationship(
@@ -73,6 +74,7 @@ class Project(Base):
         back_populates="project",
         cascade="all, delete-orphan"
     )
+    owner = relationship("User")
 
 class AccessCode(Base):
     """
@@ -112,6 +114,7 @@ class CableCalculation(Base):
     # Projektbezug + Versionierung
     project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
     version = Column(Integer, nullable=False, default=1)
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 
     # Technische Angaben
     origin = Column(String, nullable=False)              # Ursprung (z. B. Trafo)
@@ -133,6 +136,7 @@ class CableCalculation(Base):
 
     # Optional: Beziehung zum Projekt
     project = relationship("Project", back_populates="cable_calculations")
+    owner = relationship("User")
 
 class Category(Base):
     __tablename__ = "categories"

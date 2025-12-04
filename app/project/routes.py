@@ -22,6 +22,7 @@ def create_project(request: ProjectCreate, db: Session = Depends(get_db), curren
 # Read all
 @router.get("/", response_model=list[ProjectOut])
 def list_projects(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    # All authenticated users can see all projects (collaborative environment)
     return db.query(Project).all()
 
 # Read one
@@ -50,6 +51,9 @@ def delete_project(project_id: int, db: Session = Depends(get_db), current_user:
     project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
+    # Check ownership
+    if project.owner_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Not authorized to delete this project")
     db.delete(project)
     db.commit()
     return {"msg": f"Project {project_id} deleted"}

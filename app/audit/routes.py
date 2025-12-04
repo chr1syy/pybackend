@@ -32,11 +32,17 @@ def get_audit_logs(
     if user_id is not None:
         query = query.filter(AuditLog.user_id == user_id)
     if action:
-        query = query.filter(AuditLog.action.ilike(f"%{action}%"))
+        # Escape special LIKE characters to prevent wildcard injection
+        escaped_action = action.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
+        query = query.filter(AuditLog.action.ilike(f"%{escaped_action}%", escape='\\'))
     if ip_address:
-        query = query.filter(AuditLog.ip_address.ilike(f"%{ip_address}%"))
+        # Escape special LIKE characters to prevent wildcard injection
+        escaped_ip = ip_address.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
+        query = query.filter(AuditLog.ip_address.ilike(f"%{escaped_ip}%", escape='\\'))
     if user_agent:
-        query = query.filter(AuditLog.user_agent.ilike(f"%{user_agent}%"))
+        # Escape special LIKE characters to prevent wildcard injection
+        escaped_ua = user_agent.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
+        query = query.filter(AuditLog.user_agent.ilike(f"%{escaped_ua}%", escape='\\'))
     if success is not None:
         query = query.filter(AuditLog.success == success)
     if start:

@@ -19,7 +19,7 @@ router = APIRouter()
 
 @router.post("/", response_model=CableCalculationRead)
 def create_calc(project_id: int, calc: CableCalculationCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    return create_cable_calculation(db, project_id, calc)
+    return create_cable_calculation(db, project_id, calc, current_user.id)
 
 @router.get("/{version}", response_model=CableCalculationRead)
 def read_calc(project_id: int, version: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
@@ -42,7 +42,7 @@ def update_calc(project_id: int, calc_id: int, calc: CableCalculationCreate, db:
 
 @router.delete("/{calc_id}")
 def delete_calc(project_id: int, calc_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    deleted = delete_cable_calculation(db, calc_id)
+    deleted = delete_cable_calculation(db, calc_id, current_user)
     if not deleted:
         raise HTTPException(status_code=404, detail="Calculation not found")
     return {"detail": "Calculation deleted"}
