@@ -15,8 +15,10 @@ class CableCalculationBase(BaseModel):
     fuse_rating_a: float
     nominal_current_a: float
 
+
 class CableCalculationCreate(CableCalculationBase):
     pass
+
 
 class CableCalculationRead(CableCalculationBase):
     id: int
@@ -25,4 +27,6 @@ class CableCalculationRead(CableCalculationBase):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True  # For Pydantic v2, use orm_mode = True for v1
+
+    

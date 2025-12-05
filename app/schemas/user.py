@@ -9,3 +9,4 @@ class UserSchema(BaseModel):
 
 class UserUpdateSchema(BaseModel):
     role: str | None = None
+    username: str | None = None
