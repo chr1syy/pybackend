@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     CORS_ORIGINS: str = "*"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    FRONTEND_URL: str = "http://localhost:5173"
 
     EMAIL_HOST: str
     EMAIL_PORT: int = 587

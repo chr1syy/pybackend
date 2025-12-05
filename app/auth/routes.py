@@ -8,6 +8,8 @@ from fastapi.security import OAuth2PasswordRequestForm
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
+from urllib import parse
+
 from datetime import datetime, timedelta
 
 from passlib.context import CryptContext
@@ -37,6 +39,9 @@ router = APIRouter()
 
 # Check if we're in testing mode
 TESTING = os.getenv("TESTING", "false").lower() == "true"
+
+# Get Other ENV Variables
+FRONTEND_URL = settings.FRONTEND_URL
 
 # Set rate limits based on testing mode
 if TESTING:
@@ -196,12 +201,24 @@ def invite_user(
     db.add(access_code)
     db.commit()
 
+    # Generate registration URL
+    registration_url = f"{FRONTEND_URL}/complete-registration?code={code}&email={parse.quote(email)}"
+
     # Mailversand als BackgroundTask
     background_tasks.add_task(
         send_email,
         to=email,
         subject="Einladung zur Registrierung",
-        body=f"Bitte registriere dich mit folgendem Code: {code}"
+        body=f"""
+        Sie wurden eingeladen, sich zu registrieren.
+        
+        Klicken Sie auf folgenden Link, um die Registrierung abzuschließen:
+        {registration_url}
+        
+        Oder verwenden Sie manuell diesen Code: {code}
+        
+        Der Link ist 24 Stunden gültig.
+        """
     )
 
     # Audit
